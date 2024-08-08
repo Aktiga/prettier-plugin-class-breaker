@@ -15,8 +15,7 @@ export function breakClassName(
 	const classes = classString?.split(' ')
 	const extraSpace = indentCharacter.repeat(indentSize)
 	const classIndentation = baseIndentation + extraSpace
-
-	let brokenClasses = '\n' + baseIndentation
+	let brokenClasses = '\n' + classIndentation
 
 	for (let i = 0; i < classes.length; i += maxClassesPerLine) {
 		const line = classes.slice(i, i + maxClassesPerLine).join(' ')
@@ -27,7 +26,8 @@ export function breakClassName(
 		}
 	}
 
-	brokenClasses += '\n' + baseIndentation + indentCharacter.repeat(indentSize / 2)
+	const closingBraceLine = '\n' + baseIndentation
+	brokenClasses += closingBraceLine
 
 	const templateElement = t.templateElement({ raw: brokenClasses, cooked: brokenClasses }, true)
 	const templateLiteral = t.templateLiteral([templateElement], [])
