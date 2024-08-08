@@ -1,0 +1,39 @@
+{
+	"plugins": [
+		"prettier-plugin-organize-imports",
+		"prettier-plugin-multiline-arrays",
+		"prettier-plugin-merge"
+	],
+	"tailwindFunctions": ["tv"],
+	"bracketSameLine": false,
+	"printWidth": 120,
+	"semi": false,
+	"singleAttributePerLine": true,
+	"singleQuote": true,
+	"tabWidth": 4,
+	"useTabs": true,
+	"trailingComma": "es5",
+	"multilineArraysWrapThreshold": 2,
+	"endOfLine": "lf",
+	"overrides": [
+		{
+			"files": [
+				"**/*.css",
+				"**/*.html"
+			],
+			"options": {
+				"singleQuote": false
+			}
+		},
+		{
+			"files": [
+				"**/*.yml",
+				"**/*.yaml"
+			],
+			"options": {
+				"useTabs": false,
+				"tabWidth": 4
+			}
+		}
+	]
+}

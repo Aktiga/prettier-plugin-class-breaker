@@ -15,61 +15,69 @@ import { breakClassName } from './breakClassName'
  * @returns {Promise<Parser>} A modified parser that includes the preprocessing step.
  */
 export const classBreakerPreprocess = async (parser: Parser): Promise<Parser> => {
-  const { lineBreakAfterClasses, classesPerLine, indentStyle, indentSize } = await resolvePrettierConfig()
+	const { lineBreakAfterClasses, classesPerLine, indentStyle, indentSize } = await resolvePrettierConfig()
 
-  return {
-    ...parser,
-    preprocess: (code) => {
-      const ast = parse(code, {
-        sourceType: 'module',
-        plugins: ['jsx', 'typescript'],
-      })
+	return {
+		...parser,
+		preprocess: (code) => {
+			const ast = parse(code, {
+				sourceType: 'module',
+				plugins: ['jsx', 'typescript'],
+			})
 
-      let modified = false
+			let modified = false
 
-      traverse(ast, {
-        JSXAttribute(path) {
-          if (path.node.name.name === 'className') {
-            let classValue
-            let isTemplateLiteral = false
+			traverse(ast, {
+				JSXAttribute(path) {
+					if (path.node.name.name === 'className') {
+						let classValue
+						let isTemplateLiteral = false
 
-            if (path.node.value?.type === 'StringLiteral') {
-              classValue = path.node.value.value
-            } else if (
-              path.node.value?.type === 'JSXExpressionContainer' &&
-              path.node.value.expression.type === 'TemplateLiteral'
-            ) {
-              isTemplateLiteral = true
-              classValue = path.node.value.expression.quasis
-                .map((quasi) => quasi.value.raw)
-                .join('')
-                .replace(/\s+/g, ' ')
-                .trim()
-            }
+						if (path.node.value?.type === 'StringLiteral') {
+							classValue = path.node.value.value
+						} else if (
+							path.node.value?.type === 'JSXExpressionContainer' &&
+							path.node.value.expression.type === 'TemplateLiteral'
+						) {
+							isTemplateLiteral = true
+							classValue = path.node.value.expression.quasis
+								.map((quasi) => quasi.value.raw)
+								.join('')
+								.replace(/\s+/g, ' ')
+								.trim()
+						}
 
-            if (classValue) {
-              const classes = classValue.split(' ')
-              if (classes.length > lineBreakAfterClasses) {
-                const parentNode = path.parent
-                const parentStartColumn = parentNode.loc?.start.column
-                const baseIndentation = ' '.repeat(parentStartColumn || 0)
-                const result = breakClassName(classValue, baseIndentation, classesPerLine, indentStyle, indentSize)
+						if (classValue) {
+							const classes = classValue.split(' ')
+							if (classes.length > lineBreakAfterClasses) {
+								const parentNode = path.parent
+								const parentStartColumn = parentNode.loc?.start.column ?? 0
+								const startColumn = parentStartColumn + 1
+								const indentCharacter = indentStyle === 'tab' ? '\t' : ' '
+								const baseIndentation = indentCharacter.repeat(startColumn * indentSize)
+								const result = breakClassName(
+									classValue,
+									baseIndentation,
+									classesPerLine,
+									indentStyle,
+									indentSize
+								)
 
-                if (result.expression.type === 'TemplateLiteral') {
-                  path.node.value = t.jsxExpressionContainer(result.expression)
-                  modified = true
-                }
-              } else if (isTemplateLiteral && classes.length <= lineBreakAfterClasses) {
-                // Convert back to StringLiteral
-                path.node.value = t.stringLiteral(classValue)
-                modified = true
-              }
-            }
-          }
-        },
-      })
+								if (result.expression.type === 'TemplateLiteral') {
+									path.node.value = t.jsxExpressionContainer(result.expression)
+									modified = true
+								}
+							} else if (isTemplateLiteral && classes.length <= lineBreakAfterClasses) {
+								// Convert back to StringLiteral
+								path.node.value = t.stringLiteral(classValue)
+								modified = true
+							}
+						}
+					}
+				},
+			})
 
-      return modified ? generate(ast).code : code
-    },
-  }
+			return modified ? generate(ast).code : code
+		},
+	}
 }
