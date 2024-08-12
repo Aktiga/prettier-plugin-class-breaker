@@ -4,7 +4,6 @@
 		"prettier-plugin-multiline-arrays",
 		"prettier-plugin-merge"
 	],
-	"tailwindFunctions": ["tv"],
 	"bracketSameLine": false,
 	"printWidth": 120,
 	"semi": false,
