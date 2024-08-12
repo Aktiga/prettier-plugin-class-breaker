@@ -1,6 +1,6 @@
 import * as prettier from 'prettier'
-import * as fs from 'fs'
-import * as path from 'path'
+import { promises as fs } from 'fs'
+import { join } from 'path'
 
 interface CustomPrettierOptions {
 	classesPerLine: number
@@ -11,15 +11,20 @@ interface CustomPrettierOptions {
 
 /**
  * Reads the .classbreakerrs file and returns its JSON content.
- * @returns {CustomPrettierOptions} The parsed configuration from .classbreakerrs.
+ * @returns {Promise<Partial<CustomPrettierOptions>>} The parsed configuration from .classbreakerrs.
  */
-function readClassBreakerConfig(): Partial<CustomPrettierOptions> {
-	const configPath = path.join(process.cwd(), '.classbreakerrs')
-	if (fs.existsSync(configPath)) {
-		const configFile = fs.readFileSync(configPath, 'utf8')
+async function readClassBreakerConfig(): Promise<Partial<CustomPrettierOptions>> {
+	const configPath = join(process.cwd(), '.classbreakerrs')
+	try {
+		const configFile = await fs.readFile(configPath, 'utf8')
 		return JSON.parse(configFile)
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+			// File does not exist
+			return {}
+		}
+		throw error
 	}
-	return {}
 }
 
 /**
@@ -31,7 +36,7 @@ export async function resolvePrettierConfig(): Promise<CustomPrettierOptions> {
 	const prettierOptions = (await prettier.resolveConfig(process.cwd())) as Partial<CustomPrettierOptions>
 
 	// Read custom .classbreakerrs configurations
-	const classBreakerOptions = readClassBreakerConfig()
+	const classBreakerOptions = await readClassBreakerConfig()
 
 	return {
 		classesPerLine: classBreakerOptions.classesPerLine || prettierOptions.classesPerLine || 1,
