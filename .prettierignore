@@ -1,0 +1,9 @@
+README.md
+.next
+assets
+node_modules
+public
+pnpm-lock.yaml
+pnpm-lock.yml
+/types/supabase.ts
+*.md
